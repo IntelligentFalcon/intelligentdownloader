@@ -94,7 +94,6 @@ def download_version(version):
     with open(parse_path(version["assetIndex"]["url"]), "w+") as f:
         f.write(assets_file.text)
     download_assets(assets_file.json())
-    zip_files(f"{version}.zip", paths)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--version', required=True, help='Version number')
