@@ -26,7 +26,15 @@ jobs:
         git config --global http.postBuffer 524288000
         git config --global http.lowSpeedLimit 0
         git config --global http.lowSpeedTime 999999
-        git config --global core.compression 0
+    
+    - name: Set up Git LFS
+      run: |
+        git lfs install
+        git lfs track "*.jar"
+        git lfs track "*.exe"
+        git lfs track "*.dll"
+        git lfs track "*.bin"
+        git add .gitattributes
     
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -48,7 +56,7 @@ jobs:
         git checkout -b "$BRANCH_NAME"
         echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
     
-    - name: Add generated files
+    - name: Add generated files with LFS
       run: |
         git add .
         git status
@@ -64,17 +72,6 @@ jobs:
           echo "No changes to commit"
         fi
     
-    - name: Push new branch
+    - name: Push new branch with LFS
       run: |
-        git push origin "${{ env.BRANCH_NAME }}" --verbose
-      env:
-        GIT_HTTP_USER_AGENT: "git/2.39.0"
-    
-    - name: Check push result
-      run: |
-        if [ $? -ne 0 ]; then
-          echo "Push failed. Checking disk usage..."
-          du -sh .
-          find . -type f -size +50M -exec ls -lh {} \;
-          exit 1
-        fi
+        git push origin "${{ env.BRANCH_NAME }}"
