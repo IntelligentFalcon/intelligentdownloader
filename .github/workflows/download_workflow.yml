@@ -1,0 +1,61 @@
+name: Generate Files for Version
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g., v1.0.0, 2.1.3)'
+        required: true
+        type: string
+        default: 'v1.0.0'
+
+jobs:
+  generate-version-files:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+    
+    - name: Run Python script with version argument
+      run: |
+        python main.py --version "${{ github.event.inputs.version }}"
+    
+    - name: Create new branch
+      run: |
+        BRANCH_NAME="version/${{ github.event.inputs.version }}"
+        git checkout -b "$BRANCH_NAME"
+        echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_ENV
+    
+    - name: Add generated files
+      run: |
+        git add .
+        git status
+    
+    - name: Commit changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        if ! git diff --cached --quiet; then
+          git commit -m "Add generated files for version ${{ github.event.inputs.version }}"
+        else
+          echo "No changes to commit"
+        fi
+    
+    - name: Push new branch
+      run: |
+        git push origin "${{ env.BRANCH_NAME }}"
